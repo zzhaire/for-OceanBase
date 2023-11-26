@@ -510,3 +510,31 @@ RC Table::sync()
   LOG_INFO("Sync table over. table=%s", name());
   return rc;
 }
+RC Table::destroy(const char *dir)
+{
+  RC rc = sync();
+  if (rc != RC::SUCCESS)
+    return rc;
+  std::string table_file = table_meta_file(dir, name());
+  if (unlink(table_file.c_str()) != 0) {
+    LOG_ERROR("Failed to remove meta file=%s, errno=%d", table_file.c_str(), errno);
+    return RC::GENERIC_ERROR;
+  }
+
+  std::string data_file = table_data_file(dir, name());
+  if (unlink(data_file.c_str()) != 0) {
+    LOG_ERROR("Failed to remove data file=%s, errno=%d", data_file.c_str(), errno);
+    return RC::GENERIC_ERROR;
+  }
+
+  const int index_num = table_meta_.index_num();
+  for (int i = 0; i < index_num; i++) {
+    ((BplusTreeIndex *)indexes_[i])->close();
+    const IndexMeta *index_meta = table_meta_.index(i);
+    std::string      index_file = table_index_file(dir, name(), index_meta->name());
+    if (unlink(index_file.c_str()) != 0) {
+      LOG_ERROR("Failed to remove index file=%s, errno=%d", index_file.c_str(), errno);
+    }
+  }
+  return RC::SUCCESS;
+}

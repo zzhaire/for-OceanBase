@@ -86,7 +86,7 @@ public:
   RC create_index(Trx *trx, const FieldMeta *field_meta, const char *index_name);
 
   RC get_record_scanner(RecordFileScanner &scanner, Trx *trx, bool readonly);
-
+  RC destroy(const char *dir);
   RecordFileHandler *record_handler() const
   {
     return record_handler_;
